@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+option java_package = "com.sfews.alert";
+option java_outer_classname = "CitizenAlertProto";
+
+package citizenalert;
+
+service CitizenAlertService {
+
+  // Unary RPC - issue a single flood alert to a city zone
+  rpc IssueAlert (AlertRequest) returns (AlertResponse);
+
+  // Server Streaming RPC - push real-time active alerts to subscribed clients
+  rpc StreamActiveAlerts (AlertSubscription) returns (stream ActiveAlert);
+
+  // Client Streaming RPC - collect eyewitness reports from citizens or field officers
+  rpc SubmitCitizenReports (stream CitizenReport) returns (ReportSummary);
+
+  // Bidirectional Streaming RPC - two-way emergency broadcast channel
+  rpc EmergencyBroadcast (stream BroadcastMessage) returns (stream BroadcastAck);
+}
+
+// Request to issue a new flood alert
+message AlertRequest {
+  string          zone_id        = 1;  // Identifier of the affected city zone
+  string          severity       = 2;  // INFO | WARNING | DANGER | EVACUATION
+  string          message        = 3;  // Alert message text sent to citizens
+  repeated string affected_areas = 4;  // List of specific districts or streets affected
+  string          issued_by      = 5;  // Name or ID of the authority issuing the alert
+}
+
+// Confirmation returned after an alert is issued
+message AlertResponse {
+  string alert_id            = 1;  // Unique identifier assigned to this alert
+  bool   acknowledged        = 2;  // True if the alert was successfully broadcast
+  int32  recipients_notified = 3;  // Number of registered recipients notified
+  string timestamp           = 4;  // ISO 8601 timestamp of when the alert was issued
+}
+
+// Subscription request to receive a live feed of active alerts
+message AlertSubscription {
+  string          subscriber_id      = 1;  // Unique ID of the subscribing client or dashboard
+  repeated string zones_of_interest  = 2;  // Zone IDs the subscriber wants to monitor
+}
+
+// A single active alert pushed to subscribed clients
+message ActiveAlert {
+  string alert_id   = 1;  // Unique identifier of the alert
+  string zone_id    = 2;  // Zone where the alert applies
+  string severity   = 3;  // INFO | WARNING | DANGER | EVACUATION
+  string message    = 4;  // Alert message content
+  string timestamp  = 5;  // ISO 8601 timestamp of the alert
+}
+
+// An eyewitness flood report submitted by a citizen or field officer
+message CitizenReport {
+  string report_id         = 1;  // Unique identifier for this report
+  string location          = 2;  // Street address or GPS coordinates of the incident
+  string description       = 3;  // Free-text description of what was observed
+  string severity_estimate = 4;  // Reporter's estimate: LOW | MODERATE | SEVERE
+}
+
+// Summary returned after a batch of citizen reports is received
+message ReportSummary {
+  int32           reports_received  = 1;  // Total number of reports submitted
+  repeated string flagged_locations = 2;  // Locations identified as high-priority based on reports
+}
+
+// A message sent during a two-way emergency broadcast session
+message BroadcastMessage {
+  string channel_id       = 1;  // Identifier of the broadcast channel
+  string recipient_group  = 2;  // Target group: CITIZENS | EMERGENCY_SERVICES | ALL
+  string message          = 3;  // Content of the broadcast message
+  string priority         = 4;  // LOW | MEDIUM | HIGH | CRITICAL
+}
+
+// Delivery acknowledgement returned during a broadcast session
+message BroadcastAck {
+  string message_id      = 1;  // Identifier of the message being acknowledged
+  int32  delivered_count = 2;  // Number of endpoints that received the message
+  string status          = 3;  // DELIVERED | PARTIAL | FAILED
+}

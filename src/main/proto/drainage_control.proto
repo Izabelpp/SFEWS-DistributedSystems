@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+option java_package = "com.sfews.drainage";
+option java_outer_classname = "DrainageControlProto";
+
+package drainage;
+
+service DrainageControlService {
+
+  // Unary RPC - send a command to open, close or partially open a drainage gate
+  rpc SetDrainageGate (GateControlRequest) returns (GateControlResponse);
+
+  // Server Streaming RPC - continuous live status feed from a pump station
+  rpc StreamPumpStatus (PumpRequest) returns (stream PumpStatusUpdate);
+
+  // Client Streaming RPC - send coordinated commands to multiple gates at once
+  rpc BatchUpdateGates (stream GateControlRequest) returns (BatchGateResult);
+
+  // Bidirectional Streaming RPC - interactive command and status channel with the dashboard
+  rpc DrainageCoordination (stream DrainageCommand) returns (stream DrainageAck);
+}
+
+// Command to control a specific drainage gate
+message GateControlRequest {
+  string gate_id          = 1;  // Unique identifier of the drainage gate
+  string action           = 2;  // OPEN | CLOSE | PARTIAL
+  int32  open_percentage  = 3;  // Degree of opening (0–100), used when action is PARTIAL
+  string operator_id      = 4;  // ID of the operator or system issuing the command
+}
+
+// Confirmation returned after a gate command is processed
+message GateControlResponse {
+  string gate_id        = 1;  // Identifier of the gate that was controlled
+  bool   success        = 2;  // True if the command was executed successfully
+  string status_message = 3;  // Human-readable description of the result
+  string timestamp      = 4;  // ISO 8601 timestamp of the response
+}
+
+// Request to subscribe to live updates from a pump station
+message PumpRequest {
+  string station_id = 1;  // Unique identifier of the pumping station
+}
+
+// Live status update streamed from a pumping station
+message PumpStatusUpdate {
+  string station_id          = 1;  // Identifier of the pumping station
+  float  flow_rate_litres_per_sec = 2;  // Current flow rate in litres per second
+  float  capacity_percent    = 3;  // Current workload as a percentage of maximum capacity
+  string operational_status  = 4;  // RUNNING | IDLE | FAULT | OFFLINE
+}
+
+// Aggregate result returned after a batch of gate commands is processed
+message BatchGateResult {
+  int32             total_commands   = 1;  // Total number of gate commands received
+  int32             successful       = 2;  // Number of commands executed successfully
+  int32             failed           = 3;  // Number of commands that failed
+  repeated string   failure_reasons  = 4;  // Descriptions of each failure, if any
+}
+
+// Command sent during a bidirectional drainage coordination session
+message DrainageCommand {
+  string gate_id  = 1;  // Target gate identifier
+  string action   = 2;  // OPEN | CLOSE | PARTIAL
+  int32  value    = 3;  // Open percentage (0–100) when action is PARTIAL
+}
+
+// Acknowledgement returned during a bidirectional coordination session
+message DrainageAck {
+  string gate_id        = 1;  // Gate identifier that this ack refers to
+  bool   accepted       = 2;  // True if the command was accepted and applied
+  string current_status = 3;  // Current state of the gate after processing
+}

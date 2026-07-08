@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+option java_package = "com.sfews.waterLevel";
+option java_outer_classname = "WaterLevelProto";
+
+package waterlevel;
+
+service WaterLevelMonitoringService {
+
+  // Unary RPC - one-off water level check for a specific location
+  rpc GetCurrentWaterLevel (LocationRequest) returns (WaterLevelResponse);
+
+  // Server Streaming RPC - continuous live feed of water level readings
+  rpc StreamWaterLevels (LocationRequest) returns (stream WaterLevelResponse);
+
+  // Client Streaming RPC - batch upload of readings from multiple field sensors
+  rpc ReportMultipleSensors (stream SensorReading) returns (BatchSummary);
+
+  // Bidirectional Streaming RPC - persistent monitoring channel between dashboard and service
+  rpc MonitorFloodConditions (stream LocationRequest) returns (stream WaterLevelResponse);
+}
+
+// Request message identifying a monitoring location
+message LocationRequest {
+  string location_id = 1;  // Unique ID of the sensor/location
+  string zone_name   = 2;  // Name of the city zone (e.g. "North Docklands")
+}
+
+// Response message with current water level data
+message WaterLevelResponse {
+  string location_id          = 1;  // Matches the requested location
+  float  water_level_cm       = 2;  // Current water depth in centimetres
+  float  rainfall_mm_per_hour = 3;  // Rainfall rate in mm per hour
+  string risk_level           = 4;  // NORMAL | ELEVATED | HIGH | CRITICAL
+  string timestamp            = 5;  // ISO 8601 timestamp of the reading
+}
+
+// Individual sensor reading uploaded by a field device
+message SensorReading {
+  string sensor_id      = 1;  // Unique identifier of the physical sensor
+  float  water_level_cm = 2;  // Water depth recorded by this sensor
+  float  latitude       = 3;  // GPS latitude of the sensor
+  float  longitude      = 4;  // GPS longitude of the sensor
+}
+
+// Summary returned after a batch of sensor readings is received
+message BatchSummary {
+  int32  total_sensors   = 1;  // Total number of sensor readings received
+  int32  critical_count  = 2;  // Number of sensors reporting CRITICAL levels
+  float  average_level   = 3;  // Average water level across all sensors (cm)
+  string overall_status  = 4;  // Aggregate status: NORMAL | ELEVATED | HIGH | CRITICAL
+}
