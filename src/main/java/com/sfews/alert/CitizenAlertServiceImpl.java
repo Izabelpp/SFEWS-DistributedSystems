@@ -117,7 +117,7 @@ public class CitizenAlertServiceImpl extends CitizenAlertServiceGrpc.CitizenAler
             public void onNext(CitizenReport report) {
                 totalReports++;
                 System.out.println("[Alert] Report #" + totalReports + " from "
-                        + report.getReporterId() + " at " + report.getLocation()
+                        + report.getReportId() + " at " + report.getLocation()
                         + " | Severity: " + report.getSeverityEstimate());
 
                 // Flag locations reported as SEVERE

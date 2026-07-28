@@ -1,20 +1,32 @@
 package com.sfews.waterlevel;
 
+import com.sfews.ServiceRegistry;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import java.io.IOException;
 
 /**
  * Starts the Water Level Monitoring gRPC server on port 50051.
- * Run this class to start the service.
+ * Registers itself with jmDNS so the GUI can discover it automatically.
  */
 public class WaterLevelServer {
 
     private static final int PORT = 50051;
     private Server server;
+    private ServiceRegistry registry;
 
     public void start() throws IOException {
-        // Build and start the gRPC server with our service implementation
+        // Start jmDNS and register this service
+        registry = new ServiceRegistry();
+        registry.start();
+        registry.registerService(
+                ServiceRegistry.WATER_LEVEL_TYPE,
+                "WaterLevelMonitoringService",
+                PORT,
+                "Monitors water levels and flood risk across city zones"
+        );
+
+        // Start the gRPC server
         server = ServerBuilder.forPort(PORT)
                 .addService(new WaterLevelServiceImpl())
                 .build()
@@ -22,9 +34,9 @@ public class WaterLevelServer {
 
         System.out.println("[WaterLevel] Server started on port " + PORT);
 
-        // Add a shutdown hook so the server stops cleanly when the program exits
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("[WaterLevel] Shutting down server...");
+            System.out.println("[WaterLevel] Shutting down...");
+            registry.stop();
             stop();
         }));
     }
@@ -35,7 +47,6 @@ public class WaterLevelServer {
         }
     }
 
-    // Keep the server running until it is terminated
     public void blockUntilShutdown() throws InterruptedException {
         if (server != null) {
             server.awaitTermination();
