@@ -1,5 +1,10 @@
 package com.sfews.waterlevel;
 
+/**
+ *
+ * @author izabel
+ */
+
 import com.sfews.waterLevel.WaterLevelMonitoringServiceGrpc;
 import com.sfews.waterLevel.WaterLevelProto.LocationRequest;
 import com.sfews.waterLevel.WaterLevelProto.WaterLevelResponse;
