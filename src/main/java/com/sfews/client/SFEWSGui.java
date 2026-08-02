@@ -1,5 +1,10 @@
 package com.sfews.client;
 
+/**
+ *
+ * @author izabel
+ */
+
 import com.sfews.ServiceRegistry;
 import com.sfews.alert.CitizenAlertProto.*;
 import com.sfews.alert.CitizenAlertServiceGrpc;
