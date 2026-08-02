@@ -1,5 +1,10 @@
 package com.sfews.alert;
 
+/**
+ *
+ * @author izabel
+ */
+
 import com.sfews.ServiceRegistry;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
